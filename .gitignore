@@ -51,3 +51,8 @@ output/
 tmp/
 temp/
 *.tmp
+
+# Flask
+instance/
+.webassets-cache
+.flask_session/
