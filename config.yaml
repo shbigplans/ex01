@@ -1,0 +1,83 @@
+# 카페 음악 콘텐츠 생성기 설정 파일
+
+# Claude AI 설정
+claude:
+  model: "claude-sonnet-4-5-20250929"  # 최신 Claude Sonnet 4.5 모델
+  max_tokens: 2048
+  temperature: 0.7  # 창의성 수준 (0.0-1.0)
+
+# 음악 기본 설정
+music:
+  # 기본 분위기 (mood)
+  default_mood: "relaxing"
+  # 가능한 분위기들:
+  # - relaxing: 편안한
+  # - upbeat: 경쾌한
+  # - cozy: 아늑한
+  # - peaceful: 평화로운
+  # - energetic: 활기찬
+  # - melancholic: 감성적인
+  # - romantic: 로맨틱한
+
+  # 기본 테마
+  default_theme: "afternoon"
+  # 가능한 테마들:
+  # - morning: 아침
+  # - afternoon: 오후
+  # - evening: 저녁
+  # - night: 밤
+  # - rainy: 비오는 날
+  # - sunny: 화창한 날
+  # - weekend: 주말
+  # - workday: 평일
+
+  # 선호하는 장르들
+  genres:
+    - "jazz"
+    - "acoustic"
+    - "bossa nova"
+    - "lo-fi"
+    - "chill"
+    - "instrumental"
+
+# 유튜브 설정
+youtube:
+  # 채널 정보 (설명에 포함됨)
+  channel_name: "Your Cafe Music Channel"
+
+  # 고정 태그 (모든 영상에 공통으로 들어갈 태그)
+  fixed_tags:
+    - "카페음악"
+    - "cafe music"
+    - "background music"
+    - "study music"
+    - "work music"
+    - "relaxing music"
+    - "chill music"
+    - "instrumental"
+
+  # 고정 해시태그
+  fixed_hashtags:
+    - "#카페음악"
+    - "#CafeMusic"
+    - "#공부음악"
+    - "#집중음악"
+
+  # 설명 끝에 추가할 고정 문구
+  description_footer: |
+
+    ───────────────────────
+    🎧 구독과 좋아요는 큰 힘이 됩니다!
+    🔔 알림 설정을 켜두시면 새로운 음악을 가장 먼저 만나보실 수 있습니다.
+
+    💬 어떤 음악을 듣고 싶으신가요? 댓글로 의견을 남겨주세요!
+
+# 출력 설정
+output:
+  # 출력 디렉토리
+  directory: "output"
+
+  # 파일 형식
+  formats:
+    - "json"  # 기계가 읽을 수 있는 형식
+    - "txt"   # 사람이 읽기 쉬운 형식
