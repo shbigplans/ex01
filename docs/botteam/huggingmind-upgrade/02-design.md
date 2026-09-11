@@ -99,3 +99,11 @@ Google Fonts 한 번에 로드: `family=Noto+Serif+KR:wght@600;700&family=Noto+S
 ## 7. 다크 모드
 
 `:root` 라이트 기본, `@media (prefers-color-scheme: dark)` + `[data-theme]` 토글. 토글 값 localStorage `hm-theme`. 다크에서는 accent를 밝게(`#8FBFA6`) 올리고 종이 노이즈 opacity 0.06.
+
+## 8. 구현 중 확정된 예외 (R2)
+
+- IBM Plex Mono 500 웨이트 제거(Q-19 폰트 축소) → 워드마크·모노 라벨은 400 사용. 자간 0.14em 으로 무게감 보완. (Q-30)
+- 폼 입력 포커스 `outline-offset: 1px` — 입력 박스 안쪽 정렬 유지 목적, 버튼·링크는 3px 유지. (Q-24)
+- S4/S5 기술 카드에는 Ghost 링크를 두지 않고 aside CTA 로 통일. (Q-25)
+- S6 호흡 카드 CTA 는 인라인 타이머의 `시작` 버튼으로 대체. (Q-27)
+- 대비 조정: `--ink-3` #67625A / 다크 #9A9385, `--relation` #9F4830, `--amber-ink` 신설 — 모든 텍스트 4.5:1 이상. (Q-04)
