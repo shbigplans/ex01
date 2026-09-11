@@ -1,7 +1,7 @@
 # 02. 디자인 시스템 — B봇(디자인)
 
 작성: B봇 · 2026-09-11 · 근거: `00-brief.md`, `01-plan.md`
-디자인 캔버스(Claude Design) 링크: (오케스트레이터가 저장 후 기입)
+디자인 캔버스(Claude Design) 링크: https://claude.ai/code/artifact/71af0a10-781f-4b58-81dd-ffe71ee210a3 (아트보드 원본: `design/*.dc.html`, `design/canvas.json`)
 
 ## 방향: "Warm Editorial — 종이 위의 단단한 문장"
 

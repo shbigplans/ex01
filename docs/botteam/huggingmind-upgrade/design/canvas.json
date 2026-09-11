@@ -1,0 +1,63 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 8700,
+      "title": "메인 랜딩 · 데스크톱 1440"
+    },
+    {
+      "file": "Mobile.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 390,
+      "h": 4900,
+      "title": "메인 랜딩 · 모바일 390"
+    },
+    {
+      "file": "AICoach.dc.html",
+      "x": 2080,
+      "y": 0,
+      "w": 1440,
+      "h": 960,
+      "title": "AI 마음브레이크 코치 · CALM 단계"
+    },
+    {
+      "file": "Checkup.dc.html",
+      "x": 2080,
+      "y": 1100,
+      "w": 1440,
+      "h": 1000,
+      "title": "마음근력 자가진단 · 문항 + 결과"
+    },
+    {
+      "file": "DirectionB.dc.html",
+      "x": 2080,
+      "y": 2260,
+      "w": 720,
+      "h": 520,
+      "title": "대안 방향 B · Dark Precision (미채택)"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "direction-note",
+      "x": 0,
+      "y": -170,
+      "w": 520,
+      "text": "채택 방향: Warm Editorial — 따뜻한 종이색 바탕, Noto Serif KR 헤드라인, IBM Plex Mono 라벨, 브랜드 초록 1색 + 관계(테라코타)/머니(딥블루) 틴트.\n[교체: ...] 표기는 실제 사진·연락처·가격으로 바꿀 자리입니다."
+    },
+    {
+      "id": "tools-note",
+      "x": 2080,
+      "y": -120,
+      "w": 420,
+      "text": "AI 기능 3종: 마음브레이크 코치(STOP→FEEL→CALM→CHOOSE), 자가진단(8문항·게이지), 6초 호흡 타이머. 위기 안내 바는 모든 페이지 하단 고정."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body{margin:0;background:#F7F4EE;color:#1B1915;font-family:"Noto Sans KR",Pretendard,"Apple SD Gothic Neo",sans-serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+    a{color:#2F5D4A;text-decoration:none;} a:hover{color:#1F4536;}
+    .serif{font-family:"Noto Serif KR","Apple SD Gothic Neo",serif;font-weight:700;letter-spacing:-0.015em;word-break:keep-all;text-wrap:balance;}
+    .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5B564D;}
+    .card{background:#FFFDF9;border:1px solid #DDD6C9;border-radius:4px;padding:32px;box-sizing:border-box;}
+    .btn{display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 28px;border-radius:999px;font-weight:500;font-size:15px;box-sizing:border-box;}
+  </style>
+</helmet>
+<div style="width:1440px;height:1000px;background:#F7F4EE;overflow:hidden;position:relative;">
+  <header style="height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 120px;border-bottom:1px solid #DDD6C9;box-sizing:border-box;">
+    <div style="display:flex;align-items:baseline;gap:12px;"><span class="mono" style="color:#1B1915;font-weight:500;letter-spacing:0.14em;font-size:13px;">BLISS MIND FIT</span><span class="serif" style="font-size:14px;font-weight:600;color:#5B564D;">나영채</span></div>
+    <nav style="display:flex;gap:36px;font-size:15px;font-weight:500;"><span>관계 마음근력</span><span>머니 마음근력</span><span>AI 코치</span><span style="color:#2F5D4A;border-bottom:1px solid #2F5D4A;">자가진단</span><span>코치 소개</span></nav>
+    <span style="display:inline-flex;align-items:center;height:40px;padding:0 20px;border-radius:999px;background:#2F5D4A;color:#fff;font-size:14px;font-weight:500;">상담 신청</span>
+  </header>
+
+  <div style="padding:64px 120px 0;display:grid;grid-template-columns:repeat(12, minmax(0, 1fr));gap:32px;">
+    <!-- QUESTION STATE -->
+    <div style="grid-column:span 5;display:flex;flex-direction:column;gap:24px;">
+      <span class="mono" style="color:#B4553A;">Relation Fit · 마음근력 자가진단</span>
+      <div style="height:2px;background:#DDD6C9;"><div style="width:37%;height:2px;background:#2F5D4A;"></div></div>
+      <div class="card" style="padding:40px;display:flex;flex-direction:column;gap:28px;">
+        <span class="mono">R3 / 08 · 최근 한 달 기준</span>
+        <span class="serif" style="font-size:26px;line-height:1.35;">갈등이 생기면 대화 대신 입을 닫거나 자리를 피한다.</span>
+        <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:8px;">
+          <span class="mono" style="border:1px solid #DDD6C9;text-align:center;padding:16px 0;font-size:14px;">1</span><span class="mono" style="border:1px solid #DDD6C9;text-align:center;padding:16px 0;font-size:14px;">2</span><span class="mono" style="border:1px solid #DDD6C9;text-align:center;padding:16px 0;font-size:14px;">3</span><span class="mono" style="background:#2F5D4A;color:#fff;text-align:center;padding:16px 0;font-size:14px;">4</span><span class="mono" style="border:1px solid #DDD6C9;text-align:center;padding:16px 0;font-size:14px;">5</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#8E887C;"><span>전혀 그렇지 않다</span><span>매우 그렇다</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #DDD6C9;padding-top:20px;"><span class="mono">← 이전</span><span class="btn" style="background:#2F5D4A;color:#fff;height:44px;">다음</span></div>
+      </div>
+      <span style="font-size:13px;color:#8E887C;">답변은 브라우저 안에서만 계산되며 서버로 전송되지 않습니다.</span>
+    </div>
+
+    <!-- RESULT STATE -->
+    <div style="grid-column:7 / span 6;display:flex;flex-direction:column;gap:24px;">
+      <span class="mono" style="color:#B4553A;">결과 리포트 · Relation Fit</span>
+      <div class="card" style="padding:40px;display:flex;flex-direction:column;gap:32px;">
+        <div style="display:flex;align-items:center;gap:40px;">
+          <svg width="200" height="120" viewBox="0 0 200 120"><path d="M16 104 A84 84 0 0 1 184 104" fill="none" stroke="#DDD6C9" stroke-width="12" stroke-linecap="round"></path><path d="M16 104 A84 84 0 0 1 100 20" fill="none" stroke="#B4553A" stroke-width="12" stroke-linecap="round"></path><path d="M100 20 A84 84 0 0 1 157 45" fill="none" stroke="#C9963A" stroke-width="12" stroke-linecap="round"></path><text x="100" y="98" text-anchor="middle" font-family="Noto Serif KR, serif" font-weight="700" font-size="44" fill="#1B1915">53</text><text x="100" y="116" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1.5" fill="#5B564D">마음근력 지수</text></svg>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <span class="mono" style="background:#F4E4DD;color:#B4553A;padding:6px 12px;border-radius:2px;align-self:flex-start;">주의 구간 · 23 / 40</span>
+            <span class="serif" style="font-size:26px;line-height:1.3;">특정 장면에서 틈이 사라집니다.</span>
+          </div>
+        </div>
+        <p style="margin:0;font-size:16px;color:#5B564D;">평소에는 괜찮지만 '그 말', '그 표정' 앞에서 감정이 행동을 앞지릅니다. 가장 높게 나온 <span style="color:#1B1915;font-weight:500;">'선택'</span> 단계부터 훈련하면 반복되는 싸움의 고리를 끊을 수 있어요.</p>
+        <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px;">
+          <div style="border:1px solid #DDD6C9;padding:16px;display:flex;flex-direction:column;gap:6px;"><span class="mono">알아차림</span><span class="serif" style="font-size:22px;">5</span></div>
+          <div style="border:1px solid #DDD6C9;padding:16px;display:flex;flex-direction:column;gap:6px;"><span class="mono">안정</span><span class="serif" style="font-size:22px;">8</span></div>
+          <div style="border:1px solid #2F5D4A;background:#E3EDE6;padding:16px;display:flex;flex-direction:column;gap:6px;"><span class="mono" style="color:#2F5D4A;">선택 · 먼저 훈련</span><span class="serif" style="font-size:22px;">10</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #DDD6C9;padding-top:24px;">
+          <span class="mono">추천 프로그램</span>
+          <span style="font-size:16px;">"마음잇기"(부모자녀) 또는 "다시, 우리"(부부) 단기 코칭 <span style="color:#8E887C;">[교체: 회기]</span></span>
+        </div>
+        <div style="display:flex;gap:12px;"><span class="btn" style="background:#2F5D4A;color:#fff;">상담 신청</span><span class="btn" style="border:1px solid #1B1915;">AI 코치 해보기</span><span class="mono" style="align-self:center;margin-left:auto;">결과 링크 복사</span></div>
+      </div>
+      <span style="font-size:13px;color:#8E887C;">이 진단은 자기 이해를 돕는 도구이며 의학적 진단이 아닙니다.</span>
+    </div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#F6E3E3;color:#9B2D2D;font-size:13px;padding:12px 120px;">혼자 감당하기 어려운 순간이라면 — <u>자살예방상담전화 109</u> · <u>정신건강위기상담 1577-0199</u> · <u>여성긴급전화 1366</u> · 긴급 <u>112 / 119</u></div>
+</div>
+</x-dc>
+</body>
+</html>
