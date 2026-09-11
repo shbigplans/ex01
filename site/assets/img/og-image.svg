@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- OG image 1200×630 (02-design §6). PNG 는 tools/make-images.js 로 생성됨(og-image.png). 폰트가 정상 로드되는 환경에서 재생성 권장. -->
+  <rect width="1200" height="630" fill="#F7F4EE"/>
+  <g fill="none" stroke="#DDD6C9" stroke-width="1"><line x1="80" y1="96" x2="1120" y2="96"/><line x1="80" y1="534" x2="1120" y2="534"/></g>
+  <text x="80" y="76" font-family="IBM Plex Mono, Menlo, monospace" font-size="18" letter-spacing="3" fill="#5B564D">BLISS MIND FIT — 감정·충동조절 마음근력</text>
+  <text font-family="Noto Serif KR, Apple SD Gothic Neo, serif" font-weight="700" font-size="74" fill="#1B1915" letter-spacing="-1.5">
+    <tspan x="80" y="250">돈과 관계 앞에서</tspan>
+    <tspan x="80" y="345">흔들리는 마음을 훈련합니다.</tspan>
+  </text>
+  <text x="80" y="430" font-family="Noto Sans KR, Apple SD Gothic Neo, sans-serif" font-size="28" fill="#5B564D">감정은 인정하고 · 충동은 멈추고 · 행동은 내가 선택하도록</text>
+  <circle cx="1080" cy="470" r="40" fill="#2F5D4A"/><rect x="1079" y="440" width="2" height="60" fill="#FFFFFF"/>
+  <text x="80" y="580" font-family="IBM Plex Mono, Menlo, monospace" font-size="18" letter-spacing="3" fill="#8E887C">BLISS MIND FIT · huggingmind.kr</text>
+</svg>

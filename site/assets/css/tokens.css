@@ -1,0 +1,124 @@
+/* ==========================================================================
+   BLISS MIND FIT — Design tokens (02-design.md → CSS custom properties)
+   Light is the default on :root; dark is applied by system preference
+   (unless data-theme="light") and by the explicit data-theme="dark" toggle.
+   ========================================================================== */
+:root {
+  color-scheme: light;
+
+  /* 1. Color */
+  --bg: #F7F4EE;
+  --bg-2: #EFEAE1;
+  --surface: #FFFDF9;
+  --ink: #1B1915;
+  --ink-2: #5B564D;
+  --ink-3: #8E887C;
+  --line: #DDD6C9;
+  --accent: #2F5D4A;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E3EDE6;
+  --accent-hover: #27503F;
+  --relation: #B4553A;
+  --relation-soft: #F4E4DD;
+  --money: #2E5F7A;
+  --money-soft: #DFE9F0;
+  --danger: #9B2D2D;
+  --danger-soft: #F6E3E3;
+  --amber: #C9963A;
+  --noise-opacity: 0.04;
+  --shadow-hover: 0 12px 32px -16px rgb(27 25 21 / .25);
+  --header-bg: rgb(247 244 238 / .9);
+
+  /* 2. Typography */
+  --font-display: "Noto Serif KR", "Apple SD Gothic Neo", "Nanum Myeongjo", serif;
+  --font-body: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --t-display: clamp(40px, 5.2vw, 76px);
+  --t-h1: clamp(34px, 3.6vw, 52px);
+  --t-h2: clamp(26px, 2.4vw, 36px);
+  --t-h3: 22px;
+  --t-lead: clamp(17px, 1.3vw, 20px);
+  --t-body: 16px;
+  --t-small: 14px;
+  --t-mono: 12px;
+
+  --lh-display: 1.12;
+  --lh-h1: 1.18;
+  --lh-h2: 1.25;
+  --lh-h3: 1.35;
+  --lh-lead: 1.65;
+  --lh-body: 1.75;
+  --lh-small: 1.6;
+  --lh-mono: 1.4;
+
+  /* 3. Spacing & layout */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 24px;
+  --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px; --s-10: 144px;
+  --container: 1200px;
+  --gutter: clamp(20px, 4vw, 56px);
+  --grid-gap: 32px;
+  --section-y: clamp(80px, 10vw, 144px);
+  --r-pill: 999px;
+  --r-card: 4px;
+  --r-input: 4px;
+  --header-h: 76px;
+  --header-h-compact: 60px;
+
+  /* 4. Motion */
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --dur-reveal: 600ms;
+  --dur-hero: 700ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #15130F;
+    --bg-2: #1D1A15;
+    --surface: #211E18;
+    --ink: #F1ECE3;
+    --ink-2: #B4AC9E;
+    --ink-3: #7C766A;
+    --line: #2E2A22;
+    --accent: #8FBFA6;
+    --accent-ink: #0F1A15;
+    --accent-soft: #1E2E27;
+    --accent-hover: #A3CDB6;
+    --relation: #E29A84;
+    --relation-soft: #33221C;
+    --money: #8DB9D2;
+    --money-soft: #1A2730;
+    --danger: #E48B8B;
+    --danger-soft: #31201F;
+    --amber: #D9AD5C;
+    --noise-opacity: 0.06;
+    --shadow-hover: 0 12px 32px -16px rgb(0 0 0 / .6);
+    --header-bg: rgb(21 19 15 / .9);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #15130F;
+  --bg-2: #1D1A15;
+  --surface: #211E18;
+  --ink: #F1ECE3;
+  --ink-2: #B4AC9E;
+  --ink-3: #7C766A;
+  --line: #2E2A22;
+  --accent: #8FBFA6;
+  --accent-ink: #0F1A15;
+  --accent-soft: #1E2E27;
+  --accent-hover: #A3CDB6;
+  --relation: #E29A84;
+  --relation-soft: #33221C;
+  --money: #8DB9D2;
+  --money-soft: #1A2730;
+  --danger: #E48B8B;
+  --danger-soft: #31201F;
+  --amber: #D9AD5C;
+  --noise-opacity: 0.06;
+  --shadow-hover: 0 12px 32px -16px rgb(0 0 0 / .6);
+  --header-bg: rgb(21 19 15 / .9);
+}
