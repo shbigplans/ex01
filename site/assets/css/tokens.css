@@ -12,19 +12,20 @@
   --surface: #FFFDF9;
   --ink: #1B1915;
   --ink-2: #5B564D;
-  --ink-3: #8E887C;
+  --ink-3: #67625A; /* R2 Q-04: 원안 #8E887C(3.2:1) → 4.9:1 이상 (bg/bg-2/surface/soft 전부) */
   --line: #DDD6C9;
   --accent: #2F5D4A;
   --accent-ink: #FFFFFF;
   --accent-soft: #E3EDE6;
   --accent-hover: #27503F;
-  --relation: #B4553A;
+  --relation: #9F4830; /* R2 Q-04: 원안 #B4553A(4.45:1) → 5.5:1 */
   --relation-soft: #F4E4DD;
   --money: #2E5F7A;
   --money-soft: #DFE9F0;
   --danger: #9B2D2D;
   --danger-soft: #F6E3E3;
-  --amber: #C9963A;
+  --amber: #C9963A;        /* 게이지 호(비텍스트) 전용 */
+  --amber-ink: #7F5C1E;    /* R2 Q-04: 앰버 텍스트용 분리, 5.5:1 */
   --noise-opacity: 0.04;
   --shadow-hover: 0 12px 32px -16px rgb(27 25 21 / .25);
   --header-bg: rgb(247 244 238 / .9);
@@ -79,7 +80,7 @@
     --surface: #211E18;
     --ink: #F1ECE3;
     --ink-2: #B4AC9E;
-    --ink-3: #7C766A;
+    --ink-3: #9A9385; /* R2 Q-04: 원안 #7C766A(4.1:1) → 6.1:1 */
     --line: #2E2A22;
     --accent: #8FBFA6;
     --accent-ink: #0F1A15;
@@ -92,6 +93,7 @@
     --danger: #E48B8B;
     --danger-soft: #31201F;
     --amber: #D9AD5C;
+    --amber-ink: #D9AD5C;
     --noise-opacity: 0.06;
     --shadow-hover: 0 12px 32px -16px rgb(0 0 0 / .6);
     --header-bg: rgb(21 19 15 / .9);
@@ -105,7 +107,7 @@
   --surface: #211E18;
   --ink: #F1ECE3;
   --ink-2: #B4AC9E;
-  --ink-3: #7C766A;
+  --ink-3: #9A9385; /* R2 Q-04 */
   --line: #2E2A22;
   --accent: #8FBFA6;
   --accent-ink: #0F1A15;
@@ -118,6 +120,7 @@
   --danger: #E48B8B;
   --danger-soft: #31201F;
   --amber: #D9AD5C;
+  --amber-ink: #D9AD5C;
   --noise-opacity: 0.06;
   --shadow-hover: 0 12px 32px -16px rgb(0 0 0 / .6);
   --header-bg: rgb(21 19 15 / .9);

@@ -113,7 +113,7 @@
       status(form, 'warn',
         '<p><strong>폼 전송 경로가 아직 설정되지 않았습니다.</strong> <span class="replace">[교체: 폼 엔드포인트 또는 이메일]</span></p>' +
         '<p class="small">아래 내용을 복사해 <span class="replace">[교체: 이메일]</span>로 보내 주시면 접수됩니다.</p>' +
-        '<pre class="small" style="white-space:pre-wrap;font-family:var(--font-mono);font-size:12px;border:1px solid var(--line);padding:12px;border-radius:4px;background:var(--bg-2)"></pre>' +
+        '<pre></pre>' +
         '<button type="button" class="btn btn--secondary btn--small" data-copy>내용 복사</button>');
       var box = form.parentNode.querySelector('.form__status');
       box.querySelector('pre').textContent = body;

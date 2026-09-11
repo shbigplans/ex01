@@ -9,9 +9,12 @@
 
   /* Compact header */
   if (header) {
-    var ticking = false;
+    var ticking = false, compact = false;
     var update = function () {
-      header.classList.toggle('is-compact', window.scrollY > 24);
+      /* R2: 히스테리시스(48px 축소 / 12px 복원) — 축소 시 콘텐츠가 16px 이동하므로 단일 임계값이면 임계 근처에서 진동한다 */
+      var y = window.scrollY;
+      if (!compact && y > 48) compact = true; else if (compact && y < 12) compact = false;
+      header.classList.toggle('is-compact', compact);
       ticking = false;
     };
     window.addEventListener('scroll', function () {

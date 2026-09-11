@@ -15,6 +15,7 @@
 .hero__sub .sep { margin: 0 .5em; color: var(--ink-3); }
 .hero__byline { font-family: var(--font-display); font-size: 17px; color: var(--ink); }
 .hero__cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.h1__sub { display: block; font-size: .5em; font-weight: 600; color: var(--ink-2); margin-top: .35em; letter-spacing: 0; }
 .hero__media { position: relative; max-width: 420px; justify-self: end; width: 100%; }
 .hero__foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--s-4); margin-top: clamp(40px, 6vw, 80px); padding-top: var(--s-4); border-top: 1px solid var(--line); position: relative; }
 .scroll-hint { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
@@ -25,6 +26,11 @@
 @media (max-width: 900px) {
   .hero__grid, .hero--page .hero__grid { grid-template-columns: 1fr; }
   .hero__media { justify-self: start; max-width: 300px; }
+}
+/* R2 Q-22: 태블릿(601~900px)에서는 2열 유지해 우측 공백 제거 */
+@media (min-width: 601px) and (max-width: 900px) {
+  .hero__grid, .hero--page .hero__grid { grid-template-columns: 1fr 1fr; align-items: center; }
+  .hero__media { justify-self: end; max-width: 340px; }
 }
 
 /* Hero stagger (once) */
@@ -44,7 +50,7 @@
 /* ---------- Track section ---------- */
 .track { display: grid; grid-template-columns: 5fr 7fr; gap: clamp(32px, 5vw, 80px); align-items: start; }
 .track--flip { grid-template-columns: 7fr 5fr; }
-.track--flip .track__aside { order: 2; }
+@media (min-width: 901px) { .track--flip .track__aside { order: 2; } } /* R2 Q-12: DOM 은 항상 aside 먼저, 데스크톱에서만 시각 반전 */
 .track__aside { display: grid; gap: 24px; position: sticky; top: calc(var(--header-h) + 24px); }
 .track__cards { display: grid; gap: 16px; }
 .track__cards .card { padding: 24px 28px; gap: 8px; }
@@ -56,7 +62,6 @@
 .tech__body { color: var(--ink-2); }
 @media (max-width: 900px) {
   .track, .track--flip { grid-template-columns: 1fr; }
-  .track--flip .track__aside { order: 0; }
   .track__aside { position: static; }
 }
 
@@ -77,18 +82,22 @@
 /* ---------- Final CTA ---------- */
 .final { background: var(--ink); color: var(--bg); padding-block: clamp(80px, 10vw, 144px); }
 .final h2 { color: var(--bg); max-width: 24ch; }
-.final .lead { color: var(--ink-3); }
+.final .lead { color: var(--line); } /* R2 Q-04: 잉크 배경 위 보조 텍스트 12:1 */
+.final__eyebrow { color: inherit; opacity: .7; }
+.final__note { opacity: .8; }
 .final .btn--primary { background: var(--bg); color: var(--ink); border-color: var(--bg); }
 .final .btn--primary:hover { background: var(--bg-2); border-color: var(--bg-2); }
 .final .btn--secondary { color: var(--bg); border-color: var(--bg); }
 .final .btn--secondary:hover { background: rgb(255 255 255 / .08); }
 :root[data-theme="dark"] .final { background: var(--bg-2); color: var(--ink); }
 :root[data-theme="dark"] .final h2 { color: var(--ink); }
+:root[data-theme="dark"] .final .lead { color: var(--ink-2); }
 :root[data-theme="dark"] .final .btn--primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 :root[data-theme="dark"] .final .btn--secondary { color: var(--ink); border-color: var(--ink); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .final { background: var(--bg-2); color: var(--ink); }
   :root:not([data-theme="light"]) .final h2 { color: var(--ink); }
+  :root:not([data-theme="light"]) .final .lead { color: var(--ink-2); }
   :root:not([data-theme="light"]) .final .btn--primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   :root:not([data-theme="light"]) .final .btn--secondary { color: var(--ink); border-color: var(--ink); }
 }
@@ -129,6 +138,9 @@
 .history { display: grid; border-top: 1px solid var(--line); }
 .history__row { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
 .history__year { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: var(--ink-3); padding-top: 4px; }
+.about-book__author { font-size: 18px; }
+.crosslink { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.crosslink p { color: var(--ink-2); }
 @media (max-width: 800px) { .about-book { grid-template-columns: 1fr; } }
 
 /* ---------- Contact ---------- */

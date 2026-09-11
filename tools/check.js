@@ -6,7 +6,9 @@
    3) AI 코치 3트랙 완주(관계 트랙은 실제 30초 호흡, 나머지는 중단 경로) + 안전 키워드 위기 카드
    4) 자가진단 경계값(17/18, 28/29) + 6개 결과 문구 + UI 완주 + 미응답 차단
    5) 호흡 타이머 5라운드 = 30초 ±0.5초, 일시정지/중단, reduced-motion, CALM 완료 콜백
-   6) 다크/라이트 토글 저장, 모바일 오버레이 메뉴(포커스 트랩·Esc), 폼 검증·honeypot·mailto 폴백 */
+   6) 다크/라이트 토글 저장, 모바일 오버레이 메뉴(포커스 트랩·Esc), 폼 검증·honeypot·mailto 폴백
+   R2(Q-29): privacy 포함, 요소 rect 기반 오버플로 0, 텍스트 대비 샘플 4.5:1(라이트·다크), no-JS 렌더(섹션 가시성),
+             호흡 재개 문구, 코치 재시작 레이스(호흡 중/타이핑 중 재시작 → 유령 말풍선 0·pageerror 0), 자가진단 키보드 자동 진행 금지 */
 process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const { spawn } = require('child_process');
@@ -21,7 +23,7 @@ const QUICK = args.includes('--quick');
 const ALLOW_EXTERNAL = args.includes('--external'); // 기본: 외부(Google Fonts) 요청 차단 → 네트워크 의존 없이 검증. --external 로 허용.
 const ROOT = path.resolve(__dirname, '../site');
 const BASE = `http://127.0.0.1:${PORT}`;
-const PAGES = ['index.html', 'relation.html', 'money.html', 'ai-coach.html', 'checkup.html', 'about.html', 'contact.html', '404.html'];
+const PAGES = ['index.html', 'relation.html', 'money.html', 'ai-coach.html', 'checkup.html', 'about.html', 'contact.html', '404.html', 'privacy.html'];
 const WIDTHS = [400, 768, 1024, 1440];
 
 const results = { pages: [], coach: {}, checkup: {}, breath: {}, misc: {}, failures: [] };
@@ -30,6 +32,32 @@ const ok = (m) => console.log('  ok  ', m);
 const assert = (c, m) => (c ? ok(m) : fail(m));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* R2 Q-04/Q-29: 텍스트 대비 감사 — 보조 텍스트 셀렉터 샘플, 배경은 조상 중 첫 불투명 background-color */
+function contrastAudit() {
+  const SEL = 'p, span, a, li, dt, dd, label, legend, button, summary, h1, h2, h3, output';
+  const lum = (r, g, b) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const parse = (c) => { const m = c.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/); return m ? [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]] : null; };
+  const bgOf = (el) => { let n = el; while (n && n !== document.documentElement) { const c = parse(getComputedStyle(n).backgroundColor); if (c && c[3] > 0.99) return c; n = n.parentElement; } return parse(getComputedStyle(document.body).backgroundColor) || [255, 255, 255, 1]; };
+  const fails = []; let checked = 0;
+  for (const el of document.querySelectorAll(SEL)) {
+    if (el.closest('[hidden], #nav-overlay, .hp, .bubble--typing, svg')) continue;
+    if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    let fg = parse(cs.color); if (!fg) continue;
+    const op = parseFloat(cs.opacity); const bg = bgOf(el);
+    if (op < 1 || fg[3] < 1) { const a = op * fg[3]; fg = [0, 1, 2].map((i) => fg[i] * a + bg[i] * (1 - a)); }
+    const l1 = lum(fg[0], fg[1], fg[2]), l2 = lum(bg[0], bg[1], bg[2]);
+    const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const size = parseFloat(cs.fontSize), bold = parseInt(cs.fontWeight, 10) >= 700;
+    const large = size >= 24 || (size >= 18.66 && bold);
+    const need = large ? 3 : 4.5;
+    checked++;
+    if (ratio < need) fails.push(`${el.tagName.toLowerCase()}.${(el.className && typeof el.className === 'string' ? el.className.split(' ')[0] : '')} ${ratio.toFixed(2)} "${el.textContent.trim().slice(0, 18)}"`);
+    if (fails.length > 8) break;
+  }
+  return { checked, fails };
+}
 async function blockExternal(ctx) {
   if (ALLOW_EXTERNAL) return;
   await ctx.route((url) => !url.href.startsWith(BASE), (route) => route.fulfill({ status: 200, contentType: 'text/css', body: '/* external blocked in test */' })); // 빈 CSS 로 응답 → 콘솔 에러 없이 네트워크 무관 검증
@@ -57,20 +85,59 @@ async function main() {
           sw: document.documentElement.scrollWidth, iw: window.innerWidth,
           h1: document.querySelectorAll('h1').length,
           crisis: /109/.test(document.body.innerText) && /1577-0199/.test(document.body.innerText),
-          title: document.title, canonical: !!document.querySelector('link[rel=canonical]'), og: !!document.querySelector('meta[property="og:image"]')
+          title: document.title, canonical: !!document.querySelector('link[rel=canonical]'), og: !!document.querySelector('meta[property="og:image"]'),
+          js: document.documentElement.classList.contains('js'),
+          // R2: 요소 rect 기반 오버플로(오프스크린 honeypot·숨김 오버레이 제외)
+          overflow: [...document.querySelectorAll('body *')].filter((e) => {
+            if (e.closest('.hp, #nav-overlay, [hidden], script, style')) return false;
+            const r = e.getBoundingClientRect(); if (!r.width && !r.height) return false;
+            return r.right > window.innerWidth + 1 || r.left < -1;
+          }).map((e) => e.tagName.toLowerCase() + (e.className && typeof e.className === 'string' ? '.' + e.className.split(' ')[0] : '')).slice(0, 5)
         }));
-        const rec = { file, width, errors, failed, ...m };
+        await page.evaluate(() => { document.querySelectorAll('[data-reveal]').forEach((e) => e.classList.add('is-visible')); document.getAnimations().forEach((a) => { try { a.finish(); } catch (e) {} }); });
+        await sleep(700);
+        const contrast = await page.evaluate(contrastAudit);
+        const rec = { file, width, errors, failed, contrastFails: contrast.fails, contrastChecked: contrast.checked, ...m };
         results.pages.push(rec);
-        const pass = errors.length === 0 && failed.length === 0 && m.sw <= m.iw && m.h1 === 1 && m.crisis;
-        console.log(`${pass ? 'PASS' : 'FAIL'} ${file} @${width}  errors=${errors.length} failed=${failed.length} scroll=${m.sw}/${m.iw} h1=${m.h1} crisis=${m.crisis}`);
-        if (!pass) fail(`${file}@${width}: ${JSON.stringify({ errors, failed, sw: m.sw, iw: m.iw, h1: m.h1, crisis: m.crisis })}`);
-        await page.evaluate(() => document.querySelectorAll('[data-reveal]').forEach((e) => e.classList.add('is-visible'))); // 스크린샷용: 스크롤 리빌 강제 표시
-        await sleep(650);
+        const pass = errors.length === 0 && failed.length === 0 && m.sw <= m.iw && m.h1 === 1 && m.crisis && m.js && m.overflow.length === 0 && contrast.fails.length === 0;
+        console.log(`${pass ? 'PASS' : 'FAIL'} ${file} @${width}  errors=${errors.length} failed=${failed.length} scroll=${m.sw}/${m.iw} overflow=${m.overflow.length} h1=${m.h1} crisis=${m.crisis} contrast=${contrast.checked - contrast.fails.length}/${contrast.checked}`);
+        if (!pass) fail(`${file}@${width}: ${JSON.stringify({ errors, failed, sw: m.sw, iw: m.iw, overflow: m.overflow, h1: m.h1, crisis: m.crisis, contrast: contrast.fails })}`);
         await page.screenshot({ path: path.join(SHOTS, `${file.replace('.html', '')}-${width}.png`), fullPage: file === 'index.html' });
         await page.close();
       }
       await ctx.close();
     }
+
+    /* ---------- R2: 다크 모드 대비 감사 (시스템 다크 에뮬레이션) ---------- */
+    console.log('\n[contrast · dark]');
+    const dctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+    await blockExternal(dctx);
+    for (const file of PAGES) {
+      const dp = await dctx.newPage(); await dp.goto(`${BASE}/${file}`, { waitUntil: 'domcontentloaded' }); await sleep(300);
+      await dp.evaluate(() => { document.querySelectorAll('[data-reveal]').forEach((e) => e.classList.add('is-visible')); document.getAnimations().forEach((a) => { try { a.finish(); } catch (e) {} }); });
+      await sleep(700);
+      const c = await dp.evaluate(contrastAudit);
+      results.misc['darkContrast_' + file] = c;
+      assert(c.fails.length === 0, `dark ${file}: ${c.checked - c.fails.length}/${c.checked} text nodes ≥ 4.5:1 ${c.fails.length ? JSON.stringify(c.fails) : ''}`);
+      await dp.close();
+    }
+    await dctx.close();
+
+    /* ---------- R2 Q-03: no-JS 렌더 ---------- */
+    console.log('\n[no-js]');
+    const nctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
+    await blockExternal(nctx);
+    const np = await nctx.newPage(); await np.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' }); await sleep(300);
+    const nojs = await np.evaluate(() => ({
+      cls: document.documentElement.className,
+      hidden: [...document.querySelectorAll('[data-reveal]')].filter((e) => getComputedStyle(e).opacity === '0').length,
+      total: document.querySelectorAll('[data-reveal]').length,
+      h2Visible: [...document.querySelectorAll('main h2')].every((h) => h.getBoundingClientRect().height > 0)
+    }));
+    results.misc.nojs = nojs;
+    assert(nojs.cls === 'no-js' && nojs.hidden === 0 && nojs.total > 0 && nojs.h2Visible, `no-JS: html.${nojs.cls}, ${nojs.total - nojs.hidden}/${nojs.total} reveal blocks visible`);
+    await np.screenshot({ path: path.join(SHOTS, 'index-1280-nojs.png'), fullPage: true });
+    await nctx.close();
 
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'ko-KR' });
     await blockExternal(ctx);
@@ -90,6 +157,9 @@ async function main() {
     assert(stPaused === 'paused', 'pause works');
     await sleep(700);
     await page.evaluate(() => { window.__t.start(); });
+    await sleep(300);
+    const resumeText = await page.evaluate(() => window.__t.el.querySelector('.breath__phase').textContent);
+    assert(resumeText === '들이쉬세요' || resumeText === '내쉬세요', `resume restores phase text within 300ms ("${resumeText}")`); // R2 Q-06
     await page.waitForFunction(() => window.__b.end, null, { timeout: 40000 });
     const dur = await page.evaluate(() => (window.__b.end - window.__b.start) / 1000);
     results.breath.fiveRoundsSeconds = +(dur - 0.7).toFixed(3); // minus paused time
@@ -99,8 +169,11 @@ async function main() {
     // modal + Esc
     await page.click('#site-header [data-breath-open]');
     assert(await page.isVisible('.modal[role=dialog]'), 'breath modal opens from header');
+    await page.keyboard.press('Space'); // 시작 버튼에 포커스 → 시작 → 버튼 hidden
+    await sleep(200);
+    assert(await page.evaluate(() => document.activeElement.getAttribute('data-breath') === 'pause'), 'focus moves to 일시정지 after 시작 hides (Q-07)');
     await page.keyboard.press('Escape');
-    assert((await page.$('.modal')) === null, 'Esc closes breath modal');
+    assert((await page.$('.modal')) === null, 'Esc closes breath modal (document-level listener)');
     // reduced motion
     const rctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
     await blockExternal(rctx);
@@ -129,27 +202,41 @@ async function main() {
     }
     results.checkup.heads = heads;
     assert(new Set(heads.map((h) => h.split(': ')[1])).size === 6, '6 distinct result headlines rendered');
-    // UI run: money — skip q1 via 다음, answer q2..q8 → finish disabled + missing hint; then answer q1 → S=32 → train
+    // R2 Q-05: 키보드 선택은 자동 진행 금지 — ArrowRight 로 값이 바뀌어도 카드 유지, '다음' 활성화
     await page.goto(`${BASE}/checkup.html`);
     await page.click('[data-track="money"]');
     await page.waitForSelector('[data-quiz]:not([hidden])');
-    await page.click('.qcard:not([hidden]) .qnav button:nth-child(2)'); // 다음 (q1 unanswered)
-    for (let i = 1; i < 8; i++) { await page.check(`input[name="q${i}"][value="4"]`, { force: true }); await sleep(260); }
-    const finDisabled = await page.evaluate(() => document.querySelector('[data-finish]').disabled);
-    assert(finDisabled, 'result button disabled while a question is unanswered');
-    assert((await page.textContent('[data-qerror]')).includes('1번 문항'), 'missing-question hint names q1');
-    await page.click('[data-jump]');
-    assert(await page.isVisible('input[name="q0"][value="4"]'), 'jump moves to the unanswered question');
-    await page.check('input[name="q0"][value="4"]', { force: true }); await sleep(300);
-    for (let i = 1; i < 7; i++) { await page.click('.qcard:not([hidden]) .qnav button:nth-child(2)'); await sleep(60); }
+    assert(await page.evaluate(() => document.querySelector('.qcard:not([hidden]) [data-next]').disabled), '다음 disabled before answering');
+    await page.focus('input[name="q0"][value="1"]');
+    await page.keyboard.press('ArrowRight'); await sleep(400);
+    const kb = await page.evaluate(() => ({ card: document.querySelector('.qcard:not([hidden]) h2').id, val: (document.querySelector('input[name="q0"]:checked') || {}).value, next: document.querySelector('.qcard:not([hidden]) [data-next]').disabled, focusIn: document.activeElement.name === 'q0' }));
+    assert(kb.card === 'q-0' && kb.val === '2' && !kb.next && kb.focusIn, `keyboard select keeps card (card=${kb.card}, val=${kb.val}, next enabled=${!kb.next}, focus kept=${kb.focusIn})`);
+    await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); await sleep(300);
+    assert((await page.evaluate(() => document.querySelector('.qcard:not([hidden]) h2').id)) === 'q-0', 'arrow browsing 2→3→4 never advances');
+    await page.click('.qcard:not([hidden]) [data-next]'); await sleep(200);
+    assert((await page.evaluate(() => document.querySelector('.qcard:not([hidden]) h2').id)) === 'q-1', '다음 advances to q2');
+    // 마우스(포인터) 클릭은 짧은 지연 후 자동 진행 허용
+    await page.click('input[name="q1"][value="4"]', { force: true }); await sleep(500);
+    assert((await page.evaluate(() => document.querySelector('.qcard:not([hidden]) h2').id)) === 'q-2', 'pointer click auto-advances after delay');
+    for (let i = 2; i < 8; i++) { await page.click(`input[name="q${i}"][value="4"]`, { force: true }); await sleep(450); }
+    assert((await page.evaluate(() => document.querySelector('.qcard:not([hidden]) h2').id)) === 'q-7', 'last card reached');
     await page.click('[data-finish]');
     const head = await page.textContent('[data-result-head]');
-    assert(head.includes('손실이 다음 행동을 결정'), `UI run money S=32 → train: ${head}`);
+    assert(head.includes('손실이 다음 행동을 결정'), `UI run money S=4+4*7=32 → train: ${head}`);
+    assert((await page.textContent('[data-result]')).includes('오늘 할 것 1개') && (await page.textContent('[data-result]')).includes('24시간 뒤에 열기'), 'result shows 오늘 할 것 1개 (money/train)');
+    assert(!(await page.textContent('[data-result]')).includes('안내 병기'), 'no planning directive leaked into program copy (Q-10)');
+    await page.screenshot({ path: path.join(SHOTS, 'checkup-1280-result.png'), fullPage: true });
     assert((await page.evaluate(() => location.hash)) === '#result=M-32', 'hash #result=M-32');
     assert((await page.textContent('[data-result]')).includes('1336'), 'money train shows 1336');
-    // hash preselect
+    // hash preselect + shared-result wording (Q-11)
     await page.goto(`${BASE}/checkup.html#relation`);
     assert(await page.isVisible('[data-quiz]'), '#relation preselects track');
+    await page.goto(`${BASE}/checkup.html#result=R-20`); await page.reload();
+    const sharedBody = await page.textContent('[data-result] .lead');
+    assert(sharedBody.includes('먼저 훈련할 단계부터') && !sharedBody.includes("'먼저 훈련할'"), `shared result wording: ${sharedBody.slice(0, 60)}…`);
+    // 안정 구간: AI 코치 주 CTA
+    await page.goto(`${BASE}/checkup.html#result=R-10`); await page.reload();
+    assert(await page.evaluate(() => /AI 코치/.test(document.querySelector('[data-result] .btn--primary').textContent)), 'stable band → AI coach is primary CTA');
 
     /* ---------- 3. coach ---------- */
     console.log('\n[coach]');
@@ -190,6 +277,7 @@ async function main() {
       return txt;
     }
     results.coach.relation = !!(await runTrack('relation', !QUICK));
+    await page.screenshot({ path: path.join(SHOTS, 'ai-coach-1280-summary.png'), fullPage: true });
     results.coach.money = !!(await runTrack('money', false));
     results.coach.general = !!(await runTrack('general', false));
     // copy button
@@ -217,6 +305,35 @@ async function main() {
     await pick('.chat__block [data-emotion="무력감"]'); await pick('.chat__block [data-emotion="두려움"]'); await pick('.chat__block [data-cta]');
     await page.waitForSelector('.safety-card', { timeout: 5000 });
     assert((await page.textContent('.safety-card')).includes('1336'), 'money track safety includes 1336 (emotion combo trigger)');
+
+    /* ---------- R2 Q-01/02: 재시작 레이스 ---------- */
+    console.log('\n[coach · restart race]');
+    const raceErrs = [];
+    page.on('pageerror', (e) => raceErrs.push(e.message));
+    await page.goto(`${BASE}/ai-coach.html?track=money`);
+    await page.click('[data-coach-restart]'); // 타이핑 인디케이터 중(<100ms) 재시작
+    await sleep(2500);
+    const typingRace = await page.evaluate(() => ({ bots: document.querySelectorAll('.bubble--bot:not(.bubble--typing)').length, typing: document.querySelectorAll('.bubble--typing').length }));
+    assert(typingRace.bots === 2 && typingRace.typing === 0, `restart during typing → exactly 2 bot bubbles, no duplicates (${typingRace.bots})`);
+    await page.goto(`${BASE}/ai-coach.html?track=relation`);
+    await pick('.chat__block .chip[data-opt="0"]'); await pick('.chat__block [data-cta]');
+    await pick('.chat__block [data-emotion="분노"]'); await pick('.chat__block [data-cta]');
+    await pick('.chat__block .chip[data-opt="0"]'); await pick('.chat__block [data-cta]');
+    await pick('.chat__block [data-breath="start"]');
+    await sleep(500);
+    await page.click('[data-coach-restart]'); // 호흡 진행 중 재시작
+    await sleep(35000);
+    const breathRace = await page.evaluate(() => ({ bots: [...document.querySelectorAll('.bubble--bot')].map((b) => b.textContent.slice(0, 12)), users: document.querySelectorAll('.bubble--user').length, blocks: document.querySelectorAll('.chat__block').length, timers: document.querySelectorAll('.breath').length }));
+    results.coach.restartRace = breathRace;
+    assert(breathRace.bots.length === 2 && breathRace.users === 0 && breathRace.blocks === 1 && breathRace.timers === 0, `restart during breath → no ghost bubbles after 35s (${JSON.stringify(breathRace)})`);
+    assert(raceErrs.length === 0, `no pageerror during restart races (${raceErrs.length})`);
+    // Q-18: 칩 선택 후 포커스가 새 블록 첫 컨트롤로
+    await page.goto(`${BASE}/ai-coach.html?track=money`);
+    await page.waitForSelector('.chat__block .chip[data-opt="0"]');
+    await page.focus('.chat__block .chip[data-opt="0"]'); await page.keyboard.press('Enter');
+    await page.waitForSelector('.chat__block [data-cta]');
+    await sleep(100);
+    assert(await page.evaluate(() => document.activeElement.hasAttribute('data-cta')), 'focus lands on next CTA after chip Enter (Q-18)');
 
     /* ---------- 6. misc: theme, mobile nav, forms ---------- */
     console.log('\n[misc]');
@@ -263,6 +380,14 @@ async function main() {
     await page.goto(`${BASE}/contact.html#lecture`);
     assert(await page.isVisible('#lecture') && !(await page.isVisible('#counsel')), '#lecture hash opens lecture tab');
     await page.screenshot({ path: path.join(SHOTS, 'contact-1280-lecture.png'), fullPage: true });
+    await page.goto(`${BASE}/relation.html#faq`);
+    await page.evaluate(() => document.querySelectorAll('[data-reveal]').forEach((e) => e.classList.add('is-visible')));
+    await sleep(600);
+    assert((await page.evaluate(() => document.querySelectorAll('.faq details').length)) === 5 && (await page.evaluate(() => JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent)['@graph'].some((g) => g['@type'] === 'FAQPage' && g.mainEntity.length === 5))), 'relation FAQ: 5 details + FAQPage JSON-LD');
+    await page.screenshot({ path: path.join(SHOTS, 'relation-1280-faq.png'), fullPage: true });
+    await page.goto(`${BASE}/money.html`);
+    assert((await page.evaluate(() => JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent)['@graph'].some((g) => g['@type'] === 'FAQPage' && g.mainEntity.length === 5))), 'money FAQPage JSON-LD');
+    assert((await page.evaluate(() => document.querySelectorAll('footer h2').length)) === 0, 'footer headings demoted (no h2)');
 
     results.misc.pageErrorsDuringFlows = errs;
     assert(errs.length === 0, `no console/page errors during flows (${errs.length})`);

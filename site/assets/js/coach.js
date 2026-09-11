@@ -16,6 +16,8 @@
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var params = new URLSearchParams(location.search);
   var callCount = 0, offlineNoticed = false;
+  var seq = 0; // R2 Q-01/02: 세션 토큰 — 재시작 시 증가, 이전 세션의 지연 콜백은 모두 무시
+  var interacted = false; // R2 Q-18: 사용자가 한 번 조작한 뒤부터 새 블록의 첫 컨트롤로 포커스 이동
 
   var S; // session state
   function fresh() {
@@ -40,6 +42,12 @@
   function scrollLast() {
     var last = chat.lastElementChild;
     if (last && last.scrollIntoView) last.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    /* R2 Q-18: 칩 제거로 포커스가 body 로 빠졌으면 마지막 블록의 첫 인터랙티브 요소로 복귀 */
+    if (interacted && (document.activeElement === document.body || !chat.contains(document.activeElement))) {
+      var blocks = chat.querySelectorAll('.chat__block:not([hidden])');
+      var target = blocks.length ? blocks[blocks.length - 1].querySelector('button, a[href], input, textarea') : chat.querySelector('.chat__safety a');
+      if (target) target.focus({ preventScroll: true });
+    }
   }
   function userBubble(text) { var b = el('div', 'bubble bubble--user', text); chat.appendChild(b); }
   function botBubble(text) { var b = el('div', 'bubble bubble--bot'); b.textContent = text; chat.appendChild(b); scrollLast(); return b; }
@@ -48,6 +56,7 @@
 
   /* Bot speech with typing indicator (400–700ms). Optionally personalised via v2 endpoint. */
   function say(stepId, text, userText) {
+    var session = seq;
     return new Promise(function (resolve) {
       var typing = el('div', 'bubble bubble--bot bubble--typing');
       typing.setAttribute('aria-hidden', 'true');
@@ -57,7 +66,8 @@
       var v2 = COACH_ENDPOINT ? fetchV2(stepId, userText) : Promise.resolve(null);
       Promise.all([v2, new Promise(function (r) { setTimeout(r, delay); })]).then(function (res) {
         var r = res[0];
-        chat.removeChild(typing);
+        if (typing.parentNode) typing.parentNode.removeChild(typing);
+        if (session !== seq) return; // 재시작된 세션: 이전 발화는 버리고 체인을 멈춘다(resolve 하지 않음)
         var finalText = r && r.say ? r.say : text;
         botBubble(finalText);
         if (r && r.safety_flag) showSafety();
@@ -148,6 +158,8 @@
 
   /* ---------- Steps ---------- */
   function start() {
+    seq++;
+    if (root._breath) { root._breath.destroy(); root._breath = null; } // R2 Q-01: 진행 중 타이머 파괴
     S = fresh(); chat.innerHTML = ''; callCount = 0;
     var t = params.get('track');
     if (t === 'relation' || t === 'money') { S.track = t; setStep('stop'); stepStop(); return; }
@@ -230,10 +242,11 @@
   function renderBreath() {
     var b = block();
     var host = el('div', ''); b.appendChild(host);
+    var session = seq;
     var timer = window.HMBreath.create(host, {
       rounds: D.calm.rounds, size: 'sm', autoFocus: true,
-      onComplete: function () { S.breaths++; clearBlocks(); userBubble('호흡 ' + D.calm.rounds + '라운드 완료'); afterBreath(); },
-      onStop: function () { clearBlocks(); userBubble('호흡 중단'); say('calm-stopped', D.calm.stopped).then(afterBreath); }
+      onComplete: function () { if (session !== seq) return; S.breaths++; clearBlocks(); userBubble('호흡 ' + D.calm.rounds + '라운드 완료'); afterBreath(); },
+      onStop: function () { if (session !== seq) return; clearBlocks(); userBubble('호흡 중단'); say('calm-stopped', D.calm.stopped).then(afterBreath); }
     });
     root._breath = timer;
     scrollLast();
@@ -319,7 +332,6 @@
       opt.fields.forEach(function (f) {
         var lbl = el('label', 'small', f.label); lbl.htmlFor = 'lim-' + f.key;
         var inp = document.createElement('input'); inp.type = 'text'; inp.id = 'lim-' + f.key; inp.placeholder = f.placeholder; inp.className = 'chat__field';
-        inp.style.cssText = 'height:44px;padding:0 12px;border:1px solid var(--line);border-radius:4px;background:var(--surface);width:100%';
         form.appendChild(lbl); form.appendChild(inp); inputs[f.key] = inp;
       });
       b.appendChild(form);
@@ -328,7 +340,7 @@
       bubble.appendChild(el('p', '', '30초, 세 가지만 점검합니다.'));
       var list = el('div', 'nvc');
       opt.checks.forEach(function (c, i) {
-        var lab = el('label', ''); var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'chk-' + i; cb.style.marginRight = '8px';
+        var lab = el('label', ''); var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'chk-' + i;
         lab.appendChild(cb); lab.appendChild(document.createTextNode(c)); list.appendChild(lab);
       });
       bubble.appendChild(list);
@@ -378,9 +390,11 @@
     document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta);
   }
 
+  chat.addEventListener('click', function () { interacted = true; });
+  chat.addEventListener('keydown', function () { interacted = true; });
   var restartBtn = root.querySelector('[data-coach-restart]');
   if (restartBtn) restartBtn.addEventListener('click', function () { start(); });
 
-  window.HMCoach = { start: start, state: function () { return S; }, hasKeyword: hasKeyword, endpoint: COACH_ENDPOINT };
+  window.HMCoach = { start: start, state: function () { return S; }, hasKeyword: hasKeyword, endpoint: COACH_ENDPOINT, session: function () { return seq; } };
   start();
 })();

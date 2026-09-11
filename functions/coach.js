@@ -5,8 +5,9 @@
  * 입력  (POST JSON): { track: 'relation'|'money'|'general', step: string, state: object, userText?: string }
  * 출력  (JSON):      { say: string, options?: string[], safety_flag: boolean }
  *
- * 보호장치: 키워드 사전 검사 → 즉시 safety_flag / 입력 500자 제한 / IP당 분당 10회 인메모리 레이트리밋 /
- *           세션당 최대 12회(클라이언트) / 8초 타임아웃 / 저장 없음.
+ * 보호장치: 키워드 사전 검사 → 즉시 safety_flag / 입력 500자 제한 / IP당 분당 10회 인메모리 레이트리밋(웜 인스턴스 단위 —
+ *           스케일아웃 환경에서는 Netlify/Vercel 의 플랫폼 레이트리밋 또는 KV 카운터 병행 권장) / 세션당 최대 12회(클라이언트) /
+ *           8초 타임아웃 / CORS Origin 화이트리스트(ALLOWED_ORIGIN) / state 크기·타입 검증 / 저장 없음.
  *
  * 배포 (Netlify): 이 파일을 netlify/functions/coach.js 로 두거나 netlify.toml 의 functions 디렉토리를 "functions"로 지정.
  *   엔드포인트: /.netlify/functions/coach  (site/assets/js/coach.js 의 COACH_ENDPOINT 에 기입)
@@ -19,7 +20,8 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 
-const MODEL = 'claude-opus-5';
+const MODEL = process.env.COACH_MODEL || 'claude-opus-5'; // R2 Q-28: .env 의 COACH_MODEL 반영
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://huggingmind.kr'; // R2 Q-16: CORS 화이트리스트(쉼표로 여러 개)
 const MAX_INPUT = 500;
 const TIMEOUT_MS = 8000;
 const RATE_LIMIT = { windowMs: 60_000, max: 10 };
@@ -74,24 +76,40 @@ function hasSafetyKeyword(text) {
   return !!text && SAFETY_KEYWORDS.some((k) => text.includes(k));
 }
 
-const json = (status, body) => ({
+/* R2 Q-16: Origin 화이트리스트. 허용 목록에 없는 Origin 에는 CORS 헤더를 내지 않는다(브라우저 차단). */
+function corsHeaders(origin) {
+  const allowed = ALLOWED_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean);
+  const ok = origin && allowed.includes(origin);
+  return ok ? { 'Access-Control-Allow-Origin': origin, 'Vary': 'Origin', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' } : {};
+}
+const json = (status, body, origin) => ({
   statusCode: status,
-  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' },
+  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...corsHeaders(origin) },
   body: JSON.stringify(body)
 });
 
+/* R2 Q-17: state 타입·크기 검증 — 문자열 120자, 감정 최대 3개×20자, 강도 0~10 정수 */
+const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : null);
+const int010 = (v) => (Number.isInteger(v) && v >= 0 && v <= 10 ? v : null);
+function sanitizeState(state) {
+  const s = state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+  return {
+    action: str(s.action, 120), emotions: Array.isArray(s.emotions) ? s.emotions.filter((e) => typeof e === 'string').slice(0, 3).map((e) => e.slice(0, 20)) : [],
+    intensity0: int010(s.intensity0), intensityNow: int010(s.intensityNow), need: str(s.need, 120), choice: str(s.choice, 120)
+  };
+}
+
 /** Core: validate → keyword check → Claude structured output → JSON */
-export async function coach({ track, step, state, userText }, ip) {
+export async function coach(payload, ip) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return { status: 400, body: { error: 'bad_request' } }; // R2 Q-17
+  const { track, step, state, userText } = payload;
   if (rateLimited(ip)) return { status: 429, body: { error: 'rate_limited', say: '', options: [], safety_flag: false } };
   if (!ALLOWED_TRACKS.has(track) || typeof step !== 'string' || step.length > 40) return { status: 400, body: { error: 'bad_request' } };
   const text = typeof userText === 'string' ? userText.slice(0, MAX_INPUT) : '';
   if (hasSafetyKeyword(text)) return { status: 200, body: { say: SAFETY_SAY, options: [], safety_flag: true } };
 
   const client = new Anthropic({ timeout: TIMEOUT_MS, maxRetries: 0 }); // ANTHROPIC_API_KEY from env; timeout in ms
-  const safeState = {
-    action: state?.action ?? null, emotions: Array.isArray(state?.emotions) ? state.emotions.slice(0, 3) : [],
-    intensity0: state?.intensity0 ?? null, intensityNow: state?.intensityNow ?? null, need: state?.need ?? null, choice: state?.choice ?? null
-  };
+  const safeState = sanitizeState(state);
   const userMessage = [
     `트랙: ${track}`, `현재 단계: ${step}`, `상태: ${JSON.stringify(safeState)}`,
     text ? `사용자 문장(선택 입력): ${text}` : '사용자 문장: (없음)',
@@ -122,19 +140,23 @@ export async function coach({ track, step, state, userText }, ip) {
 
 /* ---------- Netlify Functions handler ---------- */
 export async function handler(event) {
-  if (event.httpMethod === 'OPTIONS') return json(204, {});
-  if (event.httpMethod !== 'POST') return json(405, { error: 'method_not_allowed' });
-  if (!process.env.ANTHROPIC_API_KEY) return json(503, { error: 'not_configured' });
+  const origin = event.headers?.origin || event.headers?.Origin || '';
+  if (event.httpMethod === 'OPTIONS') return json(204, {}, origin);
+  if (event.httpMethod !== 'POST') return json(405, { error: 'method_not_allowed' }, origin);
+  if (!process.env.ANTHROPIC_API_KEY) return json(503, { error: 'not_configured' }, origin);
+  if (origin && !corsHeaders(origin)['Access-Control-Allow-Origin']) return json(403, { error: 'origin_not_allowed' }); // R2 Q-16
+  if ((event.body || '').length > 8000) return json(413, { error: 'payload_too_large' }, origin); // R2 Q-17
   let payload;
-  try { payload = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid_json' }); }
-  const ip = (event.headers?.['x-nf-client-connection-ip'] || event.headers?.['x-forwarded-for'] || 'unknown').split(',')[0].trim();
+  try { payload = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid_json' }, origin); }
+  // R2 Q-16: 플랫폼 제공 클라이언트 IP 를 우선(x-nf-client-connection-ip 는 Netlify 가 설정, 위조 불가). x-forwarded-for 는 최후 수단.
+  const ip = (event.headers?.['x-nf-client-connection-ip'] || event.headers?.['x-real-ip'] || event.headers?.['x-forwarded-for'] || 'unknown').split(',')[0].trim();
   try {
     const { status, body } = await coach(payload, ip);
-    return json(status, body);
+    return json(status, body, origin);
   } catch (err) {
     // Anthropic.APIConnectionTimeoutError / APIStatusError 등 — 클라이언트는 어떤 오류든 v1로 폴백한다.
     const status = err instanceof Anthropic.RateLimitError ? 429 : err instanceof Anthropic.APIConnectionError ? 504 : 500;
-    return json(status, { error: err?.name || 'error' });
+    return json(status, { error: err?.name || 'error' }, origin);
   }
 }
 
@@ -144,7 +166,11 @@ export default async function (req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'not_configured' });
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  const origin = req.headers.origin || '';
+  const allowed = (process.env.ALLOWED_ORIGIN || 'https://huggingmind.kr').split(',').map((s) => s.trim());
+  if (origin && !allowed.includes(origin)) return res.status(403).json({ error: 'origin_not_allowed' });
+  if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); }
+  const ip = (req.headers['x-vercel-forwarded-for'] || req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
   try {
     const { status, body } = await coach(req.body || {}, ip);
     res.setHeader('Cache-Control', 'no-store');

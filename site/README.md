@@ -61,6 +61,17 @@ Netlify / Vercel / Cloudflare Pages / GitHub Pages 어디든 `site/` 디렉토�
 | assets/img | og-image.png (og-image.svg 를 1200×630 PNG로 변환), 필요 시 PNG favicon 세트 |
 | assets/js/coach.js | v2 활성화 시 `COACH_ENDPOINT` |
 
+## 배포 전 체크리스트 (E봇 P0 — 사용자 자료 필요)
+
+- [ ] **폼 엔드포인트 연결** — `contact.html` 두 폼의 `data-endpoint`(Formspree/Netlify Forms) 또는 `data-mailto`(실제 이메일). 미연결 배포는 전환 0.
+- [ ] **프로필 사진·저서 표지** — `index.html`/`about.html` 의 `.ph--portrait`/`.ph--book` 를 `<img>` 로 교체(alt: `나영채 감정·충동조절 마음근력 코치 프로필 사진`, `나영채 저서 『상처를 넘어설 용기』 표지`, 영문 파일명, width/height 명시).
+- [ ] **Search Console·네이버 서치어드바이저** — 각 페이지 `<head>` 의 `[교체: 검색엔진 사이트 인증 메타]` 주석 자리에 인증 메타 삽입 후 `sitemap.xml` 제출.
+- [ ] 프로그램 형식·회기·비용, 연락처, 사업자 정보, 개인정보처리방침 4항목 등 `[교체:]` 해소(아래 표).
+- [ ] 폰트가 로드되는 환경에서 `node tools/make-images.js` 로 `og-image.png` 재생성(세리프 적용).
+- [ ] v2 코치 배포 시 `functions/.env.example` 의 `ALLOWED_ORIGIN` 을 실제 도메인으로.
+
+P2(미구현, 설계안만): 유튜브 채널/영상 섹션 · 카카오톡 채널 버튼 · 트랙별 OG 이미지 — `docs/botteam/huggingmind-upgrade/06-seo.md` §5-4, §5-5, §6 참고. 채널 URL 확정 후 구현.
+
 ## 폼 연결
 
 `contact.html` 의 두 `<form data-form>` 에서:
@@ -71,7 +82,7 @@ Netlify / Vercel / Cloudflare Pages / GitHub Pages 어디든 `site/` 디렉토�
 ## AI 코치 v2 활성화 (선택, 사용자 확인 후)
 
 1. `functions/coach.js` 를 Netlify Functions(`functions/`) 또는 Vercel(`api/coach.js` 어댑터) 로 배포. `npm i @anthropic-ai/sdk`, `package.json` 에 `"type": "module"`.
-2. 서버 환경변수 `ANTHROPIC_API_KEY` 설정 (`functions/.env.example`).
+2. 서버 환경변수 `ANTHROPIC_API_KEY`, `ALLOWED_ORIGIN`(CORS 허용 도메인, 기본 https://huggingmind.kr) 설정 (`functions/.env.example`).
 3. `site/assets/js/coach.js` 의 `COACH_ENDPOINT` 를 `/.netlify/functions/coach` 또는 `/api/coach` 로 변경.
 4. 실패·8초 타임아웃 시 자동으로 v1로 폴백하며 "오프라인 가이드로 계속합니다"가 한 줄 표시됩니다.
 

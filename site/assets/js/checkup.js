@@ -41,11 +41,16 @@
       results: {
         stable: { head: '마음의 손절선이 서 있습니다.', body: '손실 뒤에도 규칙이 감정보다 앞서고 있어요. 흥분·조급함이 커지는 장세에서 이 규칙을 유지하는 것이 다음 과제입니다.', program: 'AI 마음브레이크 코치(거래 전 루틴) · 필요 시 단회 코칭' },
         caution: { head: '손실 직후, 틈이 좁아집니다.', body: "평소 규칙은 있지만 손실 직후 \"빨리 복구해야 해\"가 규칙을 밀어냅니다. '{group}' 단계부터 훈련하면 추격매매의 고리를 끊을 수 있어요.", program: '머니 마음근력 단기 코칭 [교체: 회기]' },
-        train: { head: '지금은 손실이 다음 행동을 결정하고 있습니다.', body: '손실 → 조급함 → 충동행동 → 추가 손실이 반복되고 있어요. 수익률보다 먼저 마음의 손절선을 세우는 훈련이 필요합니다. 혼자 버티기보다 코치와 함께 시작하세요.', program: '머니 마음근력 개인 코칭 [교체: 회기] · 상담 신청 우선 · 도박 관련 시 1336 안내 병기' }
+        train: { head: '지금은 손실이 다음 행동을 결정하고 있습니다.', body: '손실 → 조급함 → 충동행동 → 추가 손실이 반복되고 있어요. 수익률보다 먼저 마음의 손절선을 세우는 훈련이 필요합니다. 혼자 버티기보다 코치와 함께 시작하세요.', program: '머니 마음근력 개인 코칭 [교체: 회기] · 상담 신청 우선' }
       }
     }
   };
   var BANDS = { stable: '안정', caution: '주의', train: '훈련 필요' };
+  /* R2 E봇 P1: "오늘 할 것 1개" — AI 코치 CHOOSE 선택지(coach-data)에서 트랙·구간별로 1개 */
+  var TODAY = {
+    relation: { stable: '먼저 아이(배우자)의 말을 한 번 그대로 되풀이해 주기', caution: '지금은 말하지 않고, 20분 뒤 다시 이야기하자고 알리기', train: '내가 받은 상처를 한 줄로 적어 두고 오늘은 여기까지' },
+    money: { stable: "매수/베팅 전 '이번에는 될 거야'가 자동생각인지 30초 점검하기", caution: '미리 정한 손절선·투자 한도를 지금 적어 두기', train: '오늘 거래 앱을 닫고 24시간 뒤에 열기' }
+  };
   var SCALE = ['전혀 그렇지 않다', '그렇지 않다', '보통이다', '그렇다', '매우 그렇다'];
   var GROUP_ORDER = ['알아차림', '안정', '선택'];
 
@@ -73,7 +78,7 @@
   var pick = root.querySelector('[data-pick]');
   var quiz = root.querySelector('[data-quiz]');
   var resultEl = root.querySelector('[data-result]');
-  var track = null, answers = [], current = 0;
+  var track = null, answers = [], current = 0, pointerPick = false;
 
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
 
@@ -105,7 +110,12 @@
       for (var v = 1; v <= 5; v++) (function (v) {
         var lab = el('label', 'likert__opt');
         var inp = document.createElement('input'); inp.type = 'radio'; inp.name = 'q' + i; inp.value = String(v); inp.setAttribute('aria-label', v + ' — ' + SCALE[v - 1]);
-        inp.addEventListener('change', function () { answers[i] = v; updateProgress(); if (i < 7) setTimeout(function () { goTo(i + 1); }, 180); else updateProgress(); });
+        /* R2 Q-05: 키보드 선택은 절대 자동 진행하지 않음('다음' 활성화만). 포인터 클릭일 때만 짧은 지연 후 자동 진행 */
+        lab.addEventListener('pointerdown', function () { pointerPick = true; setTimeout(function () { pointerPick = false; }, 400); });
+        inp.addEventListener('change', function () {
+          answers[i] = v; updateProgress();
+          if (i < 7 && pointerPick) { pointerPick = false; setTimeout(function () { if (current === i) goTo(i + 1); }, 220); }
+        });
         var span = el('span', '', String(v));
         lab.appendChild(inp); lab.appendChild(span); scale.appendChild(lab);
       })(v);
@@ -115,7 +125,7 @@
       var nav = el('div', 'qnav');
       var prev = el('button', 'btn btn--secondary btn--small', '이전'); prev.type = 'button'; prev.disabled = i === 0; prev.addEventListener('click', function () { goTo(i - 1); });
       nav.appendChild(prev);
-      if (i < 7) { var next = el('button', 'btn btn--secondary btn--small', '다음'); next.type = 'button'; next.addEventListener('click', function () { goTo(i + 1); }); nav.appendChild(next); }
+      if (i < 7) { var next = el('button', 'btn btn--secondary btn--small', '다음'); next.type = 'button'; next.setAttribute('data-next', ''); next.disabled = true; next.addEventListener('click', function () { goTo(i + 1); }); nav.appendChild(next); }
       else {
         var fin = el('button', 'btn btn--primary btn--small', '결과 보기'); fin.type = 'button'; fin.setAttribute('data-finish', ''); fin.disabled = true;
         fin.addEventListener('click', showResult); nav.appendChild(fin);
@@ -133,6 +143,7 @@
     quiz._bar.style.width = (done / 8 * 100) + '%';
     quiz._plabel.textContent = DATA[track].label + ' · ' + (current + 1) + ' / 8 · 응답 ' + done + '/8';
     var fin = quiz.querySelector('[data-finish]'); if (fin) fin.disabled = done < 8;
+    var nextBtn = quiz._cards[current].querySelector('[data-next]'); if (nextBtn) nextBtn.disabled = !answers[current];
     var err = quiz.querySelector('[data-qerror]');
     if (!err) return;
     var miss = firstUnanswered();
@@ -190,20 +201,26 @@
     var body = el('div', 'stack');
     body.appendChild(el('p', 'result__band result__band--' + r.band, d.label + ' · ' + r.bandLabel + ' · 합계 ' + r.sum + ' / 40'));
     var h = el('h2', 't-h2', txt.head); h.setAttribute('data-result-head', ''); body.appendChild(h);
-    var groupText = r.group ? r.group : '먼저 훈련할';
-    body.appendChild(el('p', 'lead', txt.body.replace('{group}', groupText)));
+    var bodyText = r.group ? txt.body.replace('{group}', r.group) : txt.body.replace(/(가장 높게 나온 )?'\{group\}' 단계부터/, '먼저 훈련할 단계부터'); /* R2 Q-11 */
+    body.appendChild(el('p', 'lead', bodyText));
     if (r.group) body.appendChild(el('p', 'small', '먼저 훈련할 단계: ' + r.group + ' (알아차림 → 안정 → 선택 중 가장 높게 나온 묶음)'));
     else if (shared) body.appendChild(el('p', 'small faint', '공유된 결과에는 개별 응답이 포함되지 않아, 먼저 훈련할 단계는 표시되지 않습니다.'));
     var prog = el('div', 'card card--flat');
     prog.appendChild(el('p', 'eyebrow eyebrow--accent', '추천 프로그램'));
     prog.appendChild(el('p', 'strong', txt.program));
     body.appendChild(prog);
+    var today = el('div', 'result__today');
+    today.appendChild(el('p', 'eyebrow eyebrow--accent', '오늘 할 것 1개'));
+    today.appendChild(el('p', 'serif', TODAY[r.track][r.band]));
+    today.appendChild(el('p', 'small muted', 'AI 마음브레이크 코치의 선택 단계에서 고를 수 있는 행동입니다. 큰 행동일 필요는 없습니다.'));
+    body.appendChild(today);
     if (r.track === 'money' && r.band === 'train') {
       var cn = el('p', 'crisis-note'); cn.innerHTML = '도박 문제 상담: 한국도박문제예방치유원 헬프라인 <a href="tel:1336">1336</a> (24시간)'; body.appendChild(cn);
     }
     var actions = el('div', 'cluster mt-2');
-    var a1 = el('a', 'btn btn--secondary btn--small', 'AI 코치 해보기'); a1.href = 'ai-coach.html?track=' + r.track;
-    var a2 = el('a', 'btn btn--primary btn--small', '상담 신청'); a2.href = 'contact.html?result=' + r.code + '#counsel';
+    var stable = r.band === 'stable'; /* R2 E봇: 안정 구간은 AI 코치를 주 CTA 로 */
+    var a1 = el('a', 'btn btn--small ' + (stable ? 'btn--primary' : 'btn--secondary'), stable ? 'AI 코치로 주 1회 점검하기' : 'AI 코치 해보기'); a1.href = 'ai-coach.html?track=' + r.track;
+    var a2 = el('a', 'btn btn--small ' + (stable ? 'btn--secondary' : 'btn--primary'), '상담 신청'); a2.href = 'contact.html?result=' + r.code + '#counsel';
     var share = el('button', 'btn btn--secondary btn--small', '결과 링크 복사'); share.type = 'button';
     share.addEventListener('click', function () {
       var url = location.origin + location.pathname + '#result=' + r.code;

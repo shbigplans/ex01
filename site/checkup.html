@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="no-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,10 +32,12 @@
 <link rel="apple-touch-icon" href="assets/img/favicon-192.png" sizes="192x192">
 <meta name="theme-color" content="#F7F4EE" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15130F" media="(prefers-color-scheme: dark)">
-<script>(function(){try{var t=localStorage.getItem('hm-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
+<script>document.documentElement.classList.replace('no-js','js');(function(){try{var t=localStorage.getItem('hm-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- R2 Q-19: 폰트 CSS 비차단 로드(preload→stylesheet), Mono 500 제거. Serif 600 은 h2/h3 등에서 사용 중이라 유지 -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400&display=swap"></noscript>
 <link rel="stylesheet" href="assets/css/tokens.css">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/components.css">
@@ -88,12 +90,12 @@
   <div class="container">
     <div class="checkup-layout" id="checkup">
       <div class="stack">
-        <div class="section-head" style="margin-bottom:0"><span class="eyebrow eyebrow--accent">마음근력 자가진단</span><span class="eyebrow">8문항 · 약 2분</span></div>
-        <h1 id="page-title" class="t-h1">지금 내 마음근력은 어디에 있을까요.</h1>
+        <div class="section-head section-head--tight"><span class="eyebrow eyebrow--accent">마음근력 자가진단</span><span class="eyebrow">8문항 · 약 2분</span></div>
+        <h1 id="page-title" class="t-h1">마음근력 자가진단 — 지금 내 마음근력은 어디에 있을까요.</h1>
         <p class="lead">최근 한 달을 기준으로, 8문항에 답하면 마음근력 지수와 먼저 훈련할 단계, 추천 프로그램을 바로 받아 봅니다. 응답은 서버로 전송되지 않습니다.</p>
       </div>
       <div data-pick>
-        <p class="eyebrow mb">트랙 선택</p>
+        <p class="eyebrow">트랙 선택</p>
         <div class="track-pick mt-2">
           <button type="button" data-track="relation" aria-pressed="false"><span class="eyebrow eyebrow--relation">Relation Fit</span><span class="t">관계 마음근력</span><span class="small muted">부부·부모자녀의 분노, 상처, 갈등, 소통 · R1~R8</span></button>
           <button type="button" data-track="money" aria-pressed="false"><span class="eyebrow eyebrow--money">Money Fit</span><span class="t">머니 마음근력</span><span class="small muted">주식·코인·도박의 충동, 복구행동, 손실 후 감정조절 · M1~M8</span></button>
@@ -119,15 +121,15 @@
         <p class="site-footer__sub">감정은 인정하고 · 충동은 멈추고 · 행동은 내가 선택하도록</p>
       </div>
       <div>
-        <h2>프로그램</h2>
+        <p class="site-footer__heading">프로그램</p>
         <ul><li><a href="relation.html">관계 마음근력</a></li><li><a href="money.html">머니 마음근력</a></li><li><a href="contact.html#lecture">강의·기업교육</a></li></ul>
       </div>
       <div>
-        <h2>도구</h2>
+        <p class="site-footer__heading">도구</p>
         <ul><li><a href="ai-coach.html">AI 마음브레이크 코치</a></li><li><a href="checkup.html">마음근력 자가진단</a></li><li><a href="#" data-breath-open="5">6초 호흡 타이머</a></li></ul>
       </div>
       <div>
-        <h2>소개·문의</h2>
+        <p class="site-footer__heading">소개·문의</p>
         <ul><li><a href="about.html">코치 소개</a></li><li><a href="about.html#book">저서 『상처를 넘어설 용기』</a></li><li><a href="contact.html#counsel">상담 신청</a></li><li><a href="contact.html#lecture">강의 문의</a></li><li><span class="replace">이메일 [교체: 이메일]</span></li><li><span class="replace">전화 [교체: 전화]</span></li></ul>
       </div>
     </div>

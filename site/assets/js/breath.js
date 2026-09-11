@@ -116,6 +116,7 @@
     container.appendChild(root);
 
     function setControls() {
+      var prevFocus = root.contains(document.activeElement) && document.activeElement.hasAttribute('data-breath') ? document.activeElement : null;
       startBtn.hidden = state !== 'idle' && state !== 'paused';
       startBtn.textContent = state === 'paused' ? '다시 시작' : '시작';
       pauseBtn.hidden = state !== 'running';
@@ -123,6 +124,11 @@
       againBtn.hidden = state !== 'done';
       closeBtn.hidden = state !== 'done';
       if (roundsWrap) Array.prototype.forEach.call(roundsWrap.children, function (c) { c.disabled = state === 'running' || state === 'paused'; });
+      /* R2 Q-07: 활성 버튼이 hidden 되면 포커스가 body 로 빠지므로 상태별 첫 버튼으로 이동 */
+      if (prevFocus && prevFocus.hidden) {
+        var next = state === 'running' ? pauseBtn : state === 'done' ? againBtn : startBtn;
+        if (next && !next.hidden) next.focus({ preventScroll: true });
+      }
     }
     function setScale(s) {
       if (reduce) return;
@@ -152,7 +158,7 @@
     }
     function start() {
       if (state === 'running' || state === 'done') return;
-      if (state === 'paused') { pausedTotal += performance.now() - pausedAt; }
+      if (state === 'paused') { pausedTotal += performance.now() - pausedAt; lastPhase = ''; /* R2 Q-06: 재개 즉시 단계 문구 복원 */ }
       else { startAt = performance.now(); pausedTotal = 0; lastPhase = ''; lastRound = -1; done.hidden = true; }
       state = 'running'; setControls(); emit('start');
       raf = requestAnimationFrame(tick);
@@ -212,7 +218,7 @@
   }
 
   /* ---------- Modal ---------- */
-  var modal = null, modalOpener = null, modalTimer = null;
+  var modal = null, modalOpener = null, modalTimer = null, modalKeyHandler = null;
   var FOCUSABLE = 'a[href], button:not([disabled]):not([hidden]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
   function openModal(opts) {
     opts = opts || {};
@@ -235,15 +241,18 @@
     modalTimer = create(host, { rounds: opts.rounds || 5, selectable: opts.selectable !== false, onClose: closeModal, onComplete: opts.onComplete });
     backdrop.addEventListener('click', closeModal);
     close.addEventListener('click', closeModal);
-    modal.addEventListener('keydown', function (e) {
+    modalKeyHandler = function (e) {
+      if (!modal) return;
       if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
       if (e.key !== 'Tab') return;
       var items = modal.querySelectorAll(FOCUSABLE);
       if (!items.length) return;
       var first = items[0], last = items[items.length - 1];
+      if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    });
+    };
+    document.addEventListener('keydown', modalKeyHandler); /* R2 Q-07: document 레벨에서 Esc/Tab 처리 */
     var startBtn = host.querySelector('[data-breath="start"]');
     if (startBtn) startBtn.focus(); else close.focus();
     return modalTimer;
@@ -251,6 +260,7 @@
   function closeModal() {
     if (!modal) return;
     if (modalTimer) modalTimer.destroy();
+    if (modalKeyHandler) { document.removeEventListener('keydown', modalKeyHandler); modalKeyHandler = null; }
     modal.parentNode.removeChild(modal);
     modal = null; modalTimer = null;
     document.body.classList.remove('is-locked');
